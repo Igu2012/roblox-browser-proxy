@@ -75,7 +75,7 @@ const server = http.createServer((req, res) => {
     req.__targetOrigin = target.origin;
     const orig = req.url;
     req.url = target.pathname + target.search;
-    proxy.web(req, res, { target: target.origin, changeOrigin: true, prependPath: false, ignorePath: true }, (err) => {
+    proxy.web(req, res, { target: target.origin, changeOrigin: true, prependPath: false }, (err) => {
       req.url = orig;
       if (!res.headersSent) { res.writeHead(502, {"content-type":"text/plain"}); res.end("proxy failed: " + err.message); }
     });
@@ -92,7 +92,7 @@ server.on("upgrade", (req, socket, head) => {
   req.__targetHref = target.href;
   req.__targetOrigin = httpOrigin;
   req.url = target.pathname + target.search;
-  proxy.ws(req, socket, head, { target: httpOrigin, changeOrigin: true, ws: true, prependPath: false, ignorePath: true });
+  proxy.ws(req, socket, head, { target: httpOrigin, changeOrigin: true, ws: true, prependPath: false });
 });
 
 server.listen(PORT, HOST, () => {
