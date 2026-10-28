@@ -4,14 +4,20 @@ const zlib = require("zlib");
 const { URL } = require("url");
 const httpProxy = require("http-proxy");
 
-const { PORT, HOST, TARGET_ORIGIN, PROXY_PREFIX } = require("./lib/config");
+const { PORT, HOST, BASE, TARGET_ORIGIN, PROXY_PREFIX } = require("./lib/config");
 const { rewriteRequestHeaders, rewriteResponseHeaders } = require("./lib/headers");
 const { rewriteHtml, rewriteCss } = require("./lib/rewriter");
 
 const proxy = httpProxy.createProxyServer({ selfHandleResponse: true, changeOrigin: true, ws: true, xfwd: false });
 
 function parseTarget(raw) {
-  if (raw.startsWith(PROXY_PREFIX)) return new URL(raw.slice(PROXY_PREFIX.length));
+  const localizedLegacy = raw.match(/^\/(?:[a-z]{2}(?:-[a-z]{2})?)\/x\/(https?:\/\/.*)$/i);
+  if (localizedLegacy) raw = PROXY_PREFIX + localizedLegacy[1];
+  if (raw.startsWith(PROXY_PREFIX)) {
+    const target = new URL(raw.slice(PROXY_PREFIX.length));
+    if (target.origin === BASE) return new URL(target.pathname + target.search, TARGET_ORIGIN);
+    return target;
+  }
   return new URL(raw || "/", TARGET_ORIGIN);
 }
 
@@ -65,9 +71,12 @@ proxy.on("error", (err, req, res) => {
 });
 
 const server = http.createServer((req, res) => {
-  if (/^\/createaccount\/?$/i.test(req.url.split("?")[0])) {
+  const requestPath = req.url.split("?")[0];
+  const requestParts = requestPath.split("/").filter(Boolean);
+  if (requestParts.length && requestParts[requestParts.length - 1].toLowerCase() === "createaccount") {
+    const locale = requestParts.find(part => /^[a-z]{2}(?:-[a-z]{2})?$/i.test(part));
     const query = req.url.includes("?") ? req.url.slice(req.url.indexOf("?")) : "";
-    res.writeHead(302, { location: TARGET_ORIGIN + "/CreateAccount" + query }); res.end(); return;
+    res.writeHead(302, { location: TARGET_ORIGIN + (locale ? "/" + locale : "") + "/CreateAccount" + query }); res.end(); return;
   }
   if (req.url === "/index.html") req.url = "/";
   if (req.url.startsWith("/")) {
