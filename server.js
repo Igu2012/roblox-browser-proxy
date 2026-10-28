@@ -6,7 +6,7 @@ const httpProxy = require("http-proxy");
 
 const { PORT, HOST, TARGET_ORIGIN, PROXY_PREFIX } = require("./lib/config");
 const { rewriteRequestHeaders, rewriteResponseHeaders } = require("./lib/headers");
-const { rewriteHtml, rewriteCss, rewriteJs } = require("./lib/rewriter");
+const { rewriteHtml, rewriteCss } = require("./lib/rewriter");
 
 const proxy = httpProxy.createProxyServer({ selfHandleResponse: true, changeOrigin: true, ws: true, xfwd: false });
 
@@ -50,8 +50,6 @@ proxy.on("proxyRes", (proxyRes, req, res) => {
     try {
       if (ct.includes("text/html")) outBody = Buffer.from(rewriteHtml(body.toString("utf8"), origin, targetUrl), "utf8");
       else if (ct.includes("text/css")) outBody = Buffer.from(rewriteCss(body.toString("utf8"), origin), "utf8");
-      else if (ct.includes("javascript") || ct.includes("ecmascript") || ct.includes("application/x-javascript"))
-        outBody = Buffer.from(rewriteJs(body.toString("utf8"), origin), "utf8");
     } catch (e) { console.error("rewrite failed:", e.message); outBody = body; }
     const headers = rewriteResponseHeaders(proxyRes.headers, targetUrl);
     headers["content-length"] = Buffer.byteLength(outBody);
