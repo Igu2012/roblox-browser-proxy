@@ -4,11 +4,16 @@ const zlib = require("zlib");
 const { URL } = require("url");
 const httpProxy = require("http-proxy");
 
-const { PORT, HOST, PROXY_PREFIX } = require("./lib/config");
+const { PORT, HOST, TARGET_ORIGIN, PROXY_PREFIX } = require("./lib/config");
 const { rewriteRequestHeaders, rewriteResponseHeaders } = require("./lib/headers");
 const { rewriteHtml, rewriteCss, rewriteJs } = require("./lib/rewriter");
 
 const proxy = httpProxy.createProxyServer({ selfHandleResponse: true, changeOrigin: true, ws: true, xfwd: false });
+
+function parseTarget(raw) {
+  if (raw.startsWith(PROXY_PREFIX)) return new URL(raw.slice(PROXY_PREFIX.length));
+  return new URL(raw || "/", TARGET_ORIGIN);
+}
 
 function applyForge(proxyReq, req) {
   const forged = rewriteRequestHeaders(req.headers, req.__targetOrigin || "");
@@ -62,14 +67,11 @@ proxy.on("error", (err, req, res) => {
 });
 
 const server = http.createServer((req, res) => {
-  if (req.url === "/" || req.url === "" || req.url === "/index.html") {
-    res.writeHead(302, { location: PROXY_PREFIX + "https://www.roblox.com/" }); res.end(); return;
-  }
-  if (req.url.startsWith(PROXY_PREFIX)) {
-    const raw = req.url.slice(PROXY_PREFIX.length);
+  if (req.url === "/index.html") req.url = "/";
+  if (req.url.startsWith("/")) {
     let target;
-    try { target = new URL(raw); } catch {
-      res.writeHead(400, {"content-type":"text/plain"}); res.end("bad target: " + raw); return;
+    try { target = parseTarget(req.url); } catch {
+      res.writeHead(400, {"content-type":"text/plain"}); res.end("bad target: " + req.url); return;
     }
     req.__targetHref = target.href;
     req.__targetOrigin = target.origin;
@@ -87,7 +89,7 @@ const server = http.createServer((req, res) => {
 server.on("upgrade", (req, socket, head) => {
   if (!req.url || !req.url.startsWith(PROXY_PREFIX)) { socket.destroy(); return; }
   let target;
-  try { target = new URL(req.url.slice(PROXY_PREFIX.length)); } catch { socket.destroy(); return; }
+  try { target = parseTarget(req.url); } catch { socket.destroy(); return; }
   const httpOrigin = target.origin.replace(/^wss:/, "https:").replace(/^ws:/, "http:");
   req.__targetHref = target.href;
   req.__targetOrigin = httpOrigin;
