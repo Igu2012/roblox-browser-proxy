@@ -1,0 +1,12 @@
+{
+  "name": "roblox-browser-proxy",
+  "version": "0.1.0",
+  "private": true,
+  "main": "server.js",
+  "scripts": { "start": "node server.js" },
+  "dependencies": {
+    "cheerio": "^1.0.0-rc.12",
+    "http-proxy": "^1.18.1"
+  },
+  "engines": { "node": ">=18" }
+}

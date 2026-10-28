@@ -1,0 +1,24 @@
+#!/data/data/com.termux/files/usr/bin/bash
+set -euo pipefail
+case "${1:-}" in -h|--help)
+  echo "zipgen [<dir> [<outname>]] — zip a dir into Documents/"; exit 0;;
+esac
+resolve_outdir() {
+  [ -d "$HOME/storage/documents" ] && { echo "$HOME/storage/documents"; return; }
+  [ -d "/sdcard/Documents" ]       && { echo "/sdcard/Documents"; return; }
+  mkdir -p "$HOME/Documents"; echo "$HOME/Documents"
+}
+OUTDIR="$(resolve_outdir)"
+SRC="${1:-$PWD}"
+[ -d "$SRC" ] || { echo "zipgen: not a dir: $SRC" >&2; exit 1; }
+SRC="$(cd "$SRC" && pwd)"
+BASENAME="$(basename "$SRC")"
+OUTNAME="${2:-$BASENAME}"; OUTNAME="${OUTNAME%.zip}"
+OUTFILE="$OUTDIR/${OUTNAME}.zip"
+[ -e "$OUTFILE" ] && echo "zipgen: overwriting $OUTFILE" >&2
+echo "packing $SRC -> $OUTFILE"
+cd "$(dirname "$SRC")"
+zip -r9 -q "$OUTFILE" "$BASENAME" \
+  -x "*/node_modules/*" -x "*/.git/*" -x "*/__pycache__/*" \
+  -x "*.log" -x "*/.DS_Store"
+echo "done: $OUTFILE ($(du -h "$OUTFILE" | awk '{print $1}'))"

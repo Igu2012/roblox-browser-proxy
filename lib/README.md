@@ -1,0 +1,3 @@
+- config.js   — constants (PORT/HOST env-aware)
+- headers.js  — header forging + Set-Cookie/Location rewrite
+- rewriter.js — HTML/CSS/JS rewriters + runtime shim

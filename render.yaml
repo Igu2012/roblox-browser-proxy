@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: roblox-browser-proxy
+    runtime: node
+    plan: starter
+    region: oregon
+    branch: main
+    autoDeploy: true
+    buildCommand: npm ci --omit=dev || npm install --omit=dev
+    startCommand: node server.js
+    healthCheckPath: /
+    envVars:
+      - key: NODE_VERSION
+        value: "20"
+      - key: NODE_ENV
+        value: production
