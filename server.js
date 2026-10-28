@@ -71,13 +71,6 @@ proxy.on("error", (err, req, res) => {
 });
 
 const server = http.createServer((req, res) => {
-  const requestPath = req.url.split("?")[0];
-  const requestParts = requestPath.split("/").filter(Boolean);
-  if (requestParts.length && requestParts[requestParts.length - 1].toLowerCase() === "createaccount") {
-    const locale = requestParts.find(part => /^[a-z]{2}(?:-[a-z]{2})?$/i.test(part));
-    const query = req.url.includes("?") ? req.url.slice(req.url.indexOf("?")) : "";
-    res.writeHead(302, { location: TARGET_ORIGIN + (locale ? "/" + locale : "") + "/CreateAccount" + query }); res.end(); return;
-  }
   if (req.url === "/index.html") req.url = "/";
   if (req.url.startsWith("/")) {
     let target;
