@@ -65,6 +65,10 @@ proxy.on("error", (err, req, res) => {
 });
 
 const server = http.createServer((req, res) => {
+  if (/^\/createaccount\/?$/i.test(req.url.split("?")[0])) {
+    const query = req.url.includes("?") ? req.url.slice(req.url.indexOf("?")) : "";
+    res.writeHead(302, { location: TARGET_ORIGIN + "/CreateAccount" + query }); res.end(); return;
+  }
   if (req.url === "/index.html") req.url = "/";
   if (req.url.startsWith("/")) {
     let target;
