@@ -15,7 +15,9 @@ function parseTarget(raw) {
   if (localizedLegacy) raw = PROXY_PREFIX + localizedLegacy[1];
   if (raw.startsWith(PROXY_PREFIX)) {
     const target = new URL(raw.slice(PROXY_PREFIX.length));
-    if (target.origin === BASE) return new URL(target.pathname + target.search, TARGET_ORIGIN);
+    if (target.origin === BASE || /(^|\.)roblox-browser-proxy\.onrender\.com$/i.test(target.hostname)) {
+      return new URL(target.pathname + target.search, TARGET_ORIGIN);
+    }
     return target;
   }
   const pathname = (raw || "/").split("?")[0];
