@@ -4,7 +4,7 @@ const zlib = require("zlib");
 const { URL } = require("url");
 const httpProxy = require("http-proxy");
 
-const { PORT, HOST, BASE, TARGET_ORIGIN, PROXY_PREFIX } = require("./lib/config");
+const { PORT, HOST, BASE, TARGET_ORIGIN, PLAY_ORIGIN, PROXY_PREFIX } = require("./lib/config");
 const { rewriteRequestHeaders, rewriteResponseHeaders } = require("./lib/headers");
 const { rewriteHtml, rewriteCss } = require("./lib/rewriter");
 
@@ -17,6 +17,10 @@ function parseTarget(raw) {
     const target = new URL(raw.slice(PROXY_PREFIX.length));
     if (target.origin === BASE) return new URL(target.pathname + target.search, TARGET_ORIGIN);
     return target;
+  }
+  const pathname = (raw || "/").split("?")[0];
+  if (/^\/(?:[a-z]{2}(?:-[a-z]{2})?\/)?games\/start(?:\/|$)/i.test(pathname)) {
+    return new URL(raw || "/", PLAY_ORIGIN);
   }
   return new URL(raw || "/", TARGET_ORIGIN);
 }
